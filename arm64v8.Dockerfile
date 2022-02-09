@@ -1,4 +1,4 @@
-FROM node:12.16-slim as builder
+FROM node:12.22.10-stretch-slim as builder
 
 ARG STANDALONE
 
@@ -18,7 +18,7 @@ COPY . .
 RUN npm run dist \
     && rm -rf src
 
-FROM arm64v8/node:12.16-slim
+FROM arm64v8/node:12.22.10-stretch-slim
 
 WORKDIR /opt/charged
 ARG TESTRUNNER
@@ -29,11 +29,12 @@ ENV STANDALONE=$STANDALONE
 
 COPY --from=builder /usr/bin/qemu-aarch64-static /usr/bin/qemu-aarch64-static
 
-RUN apt-get update && apt-get install -y --no-install-recommends inotify-tools \
-    && rm -rf /var/lib/apt/lists/* \
+RUN apt-get update && apt-get install -y --no-install-recommends inotify-tools python build-essential \
+    && rm -rf /var/lib/apt/lists/* \ 
     && ln -s /opt/charged/bin/charged /usr/bin/charged \
     && mkdir /data \
     && ln -s /data/lightning /tmp/.lightning
+RUN npm install sqlite3 --build-from-source
 
 COPY --from=builder /opt/local /usr/local
 COPY --from=builder /opt/charged /opt/charged
